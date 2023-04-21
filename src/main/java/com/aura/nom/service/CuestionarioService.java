@@ -1,16 +1,20 @@
 package com.aura.nom.service;
 
 import com.aura.nom.dto.CuestionarioDto;
+import com.aura.nom.dto.CuestionarioXPersonaDto;
 import com.aura.nom.dto.PreguntaDTO;
 import com.aura.nom.dto.RespuestaDTO;
+import com.aura.nom.exception.BusinessException;
 import com.aura.nom.model.*;
 import com.aura.nom.repository.CuestionarioRepository;
+import com.aura.nom.repository.CuestionarioXPersonaRepository;
 import com.aura.nom.repository.PreguntaRepository;
 import com.aura.nom.repository.RespuestaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -25,6 +29,39 @@ public class CuestionarioService {
     @Autowired
     private RespuestaRepository respuestaRepository;
 
+    @Autowired
+    private CuestionarioXPersonaRepository cuestionarioXPersonaRepository;
+
+    public void updateSacOrJefe(CuestionarioXPersonaDto cuestionarioXPersonaDto,int idColaborador) throws BusinessException {
+
+        CuestionarioXPersonaKey cuestionarioXPersonaKey = new CuestionarioXPersonaKey(idColaborador,cuestionarioXPersonaDto.getIdCuestionario());
+        CuestionarioXPersona cuestionarioXPersona = cuestionarioXPersonaRepository.findById(cuestionarioXPersonaKey).orElseThrow(()->{return new BusinessException("NOT FOUND",404);});
+
+        if(cuestionarioXPersonaDto.getTypeSacOrJefe()==0) {
+            cuestionarioXPersona.setSac(cuestionarioXPersonaDto.getValueSacOrJefe());
+        }else {
+            cuestionarioXPersona.setJefe(cuestionarioXPersonaDto.getValueSacOrJefe());
+        }
+        cuestionarioXPersonaRepository.saveAndFlush(cuestionarioXPersona);
+
+    }
+
+    public void updateCompletarCuestionario(int idCuestionario,int idColaborador) throws BusinessException {
+
+        CuestionarioXPersonaKey cuestionarioXPersonaKey = new CuestionarioXPersonaKey(idColaborador,idCuestionario);
+        CuestionarioXPersona cuestionarioXPersona = cuestionarioXPersonaRepository.findById(cuestionarioXPersonaKey).orElseThrow(()->{return new BusinessException("NOT FOUND",404);});
+
+        cuestionarioXPersona.setCompleto(true);
+
+        cuestionarioXPersonaRepository.saveAndFlush(cuestionarioXPersona);
+
+    }
+
+    public CuestionarioXPersona getCuestionarioXPersona(int idColaborador,int idCuestionario) throws BusinessException {
+
+        CuestionarioXPersonaKey cuestionarioXPersonaKey = new CuestionarioXPersonaKey(idColaborador,idCuestionario);
+        return cuestionarioXPersonaRepository.findById(cuestionarioXPersonaKey).orElseThrow(()->{return new BusinessException("NOT FOUND",404);});
+    }
 
 
     public List<CuestionarioDto> getCuestionarios(int idColaborador){
@@ -39,6 +76,24 @@ public class CuestionarioService {
             cuestionarioDto.setDescripcion(cuestionario.getDescripcion());
             cuestionarioDto.setTotal(preguntaRepository.countByIdIdCuestionario(cuestionario.getIdCuestionario()));
             cuestionarioDto.setRespondidas(respuestaRepository.countByIdIdCuestionarioAndIdIdColaborador(cuestionario.getIdCuestionario(),idColaborador));
+
+            CuestionarioXPersonaKey cuestionarioXPersonaKey = new CuestionarioXPersonaKey(idColaborador,cuestionario.getIdCuestionario());
+            CuestionarioXPersona cuestionarioXPersona = cuestionarioXPersonaRepository.findById(cuestionarioXPersonaKey).orElse(null);
+            if(cuestionarioXPersona==null){
+                cuestionarioXPersona = new CuestionarioXPersona();
+                cuestionarioXPersona.setId(cuestionarioXPersonaKey);
+                cuestionarioXPersona.setActivo(true);
+                cuestionarioXPersona.setJefe(0);
+                cuestionarioXPersona.setSac(0);
+                cuestionarioXPersona.setCompleto(false);
+                cuestionarioXPersona.setFechaCreacion(new Date());
+                cuestionarioXPersonaRepository.saveAndFlush(cuestionarioXPersona);
+                cuestionarioDto.setCompleto(false);
+            }else{
+                cuestionarioDto.setCompleto(cuestionarioXPersona.isCompleto());
+            }
+
+
             cuestionarioDtos.add(cuestionarioDto);
         }
         return cuestionarioDtos;

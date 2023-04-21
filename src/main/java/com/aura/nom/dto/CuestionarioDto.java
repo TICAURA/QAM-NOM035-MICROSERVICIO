@@ -8,4 +8,5 @@ public @Data class CuestionarioDto {
     private String descripcion;
     private long total;
     private long respondidas;
+    private boolean completo;
 }

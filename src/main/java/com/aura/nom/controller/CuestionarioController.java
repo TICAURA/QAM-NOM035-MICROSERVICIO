@@ -1,10 +1,12 @@
 package com.aura.nom.controller;
 
 import com.aura.nom.dto.CuestionarioDto;
+import com.aura.nom.dto.CuestionarioXPersonaDto;
 import com.aura.nom.dto.PreguntaDTO;
 import com.aura.nom.dto.RespuestaDTO;
 import com.aura.nom.exception.BusinessException;
 import com.aura.nom.model.Cuestionario;
+import com.aura.nom.model.CuestionarioXPersona;
 import com.aura.nom.model.Pregunta;
 import com.aura.nom.service.CuestionarioService;
 import org.slf4j.Logger;
@@ -35,6 +37,41 @@ public class CuestionarioController {
             return new ResponseEntity<Object>("{\"error\":\"Servicio no disponible.\"}",HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @PostMapping("update-sac-jefe")
+    public ResponseEntity<Object> updateSacOrJefe(@RequestAttribute("idColaborador") int idColaborador, @RequestBody CuestionarioXPersonaDto cuestionarioXPersonaDto){
+        try {
+            cuestionarioService.updateSacOrJefe(cuestionarioXPersonaDto,idColaborador);
+            return new ResponseEntity<Object>( HttpStatus.OK);
+        }catch (Exception e){
+            logger.error("error al traer cuestionarios:"+e.getMessage(),e);
+            return new ResponseEntity<Object>("{\"error\":\"Servicio no disponible.\"}",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/sac-jefe/{idCuestionario}")
+    public ResponseEntity<Object> getSacOrJefe(@RequestAttribute("idColaborador") int idColaborador,@PathVariable("idCuestionario") int idCuestionario){
+        try {
+            CuestionarioXPersona cuestionarioXPersona = cuestionarioService.getCuestionarioXPersona(idColaborador,idCuestionario);
+            return new ResponseEntity<Object>(cuestionarioXPersona, HttpStatus.OK);
+        }catch (Exception e){
+            logger.error("error al buscar attributos sac o jefe:"+e.getMessage(),e);
+            return new ResponseEntity<Object>("{\"error\":\"Servicio no disponible.\"}",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/completar/{idCuestionario}")
+    public ResponseEntity<Object> getCompletar(@RequestAttribute("idColaborador") int idColaborador,@PathVariable("idCuestionario") int idCuestionario){
+        try {
+            cuestionarioService.updateCompletarCuestionario(idCuestionario,idColaborador);
+            return new ResponseEntity<Object>( HttpStatus.OK);
+        }catch (Exception e){
+            logger.error("error al buscar attributos sac o jefe:"+e.getMessage(),e);
+            return new ResponseEntity<Object>("{\"error\":\"Servicio no disponible.\"}",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
 
     @GetMapping("/preguntas/{idCuestionario}")
     public ResponseEntity<Object> getPreguntas(@PathVariable("idCuestionario") int idCuestionario){
